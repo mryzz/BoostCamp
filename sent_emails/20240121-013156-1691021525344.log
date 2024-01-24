@@ -1,0 +1,25 @@
+Content-Type: text/plain; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+Subject: Password reset on 127.0.0.1:8000
+From: webmaster@localhost
+To: yongze2003@gmail.com
+Date: Sat, 20 Jan 2024 17:31:56 -0000
+Message-ID: <170577191681.5960.1825684112668277863@DESKTOP-E2ISGGR>
+
+
+You're receiving this email because you requested a password reset for your user account at 127.0.0.1:8000.
+
+Please go to the following page and choose a new password:
+
+http://127.0.0.1:8000/accounts/reset/MTI/c14pl8-ed5c7c1ed2525a3653f452811fae79cc/
+
+Your username, in case you’ve forgotten: test123456
+
+Thanks for using our site!
+
+The 127.0.0.1:8000 team
+
+
+
+-------------------------------------------------------------------------------

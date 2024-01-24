@@ -1,0 +1,15 @@
+{% extends "../layout/base.html" %} {% load static %} 
+
+{% block page_title %}
+    <h2>Post a class</h2>
+{% endblock page_title %}
+
+{% block page_content %}
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button class="button is-success is-fullwidth is-medium mt-5"
+                type="submit">Submit
+        </button>
+    </form>
+{% endblock page_content %}

@@ -1,0 +1,35 @@
+{% extends "./layout/base.html" %}
+{% load static %}
+
+{% block page_title %}
+    <h2>Sign Up</h2>
+{% endblock page_title %}
+
+{% block page_content %}
+  <form action="/signup/" method="post">
+    {% csrf_token %}
+    <!-- Iterate through each field in the form -->
+    {% for field in form %}
+      <p>
+        <!-- Display the label and input field -->
+        {{ field.label_tag }}<br>
+        {{ field }}
+
+        <!-- Display help text if available -->
+        {% if field.help_text %}
+          <small style="color: grey">{{ field.help_text }}</small>
+        {% endif %}
+
+        <!-- Display errors, if any, for the field -->
+        {% for error in field.errors %}
+          <p style="color: red">{{ error }}</p>
+        {% endfor %}
+      </p>
+    {% endfor %}
+
+    <!-- Submit Button for Form Submission -->
+    <button type="submit">Sign up</button>
+  </form>
+{% endblock page_content %}
+
+
