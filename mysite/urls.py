@@ -5,6 +5,7 @@ from django.urls import path, include, re_path
 urlpatterns = [
     path('admin/', admin.site.urls),
     path("accounts/", include('accounts.urls')),
+    path('myclass/', include('myclass.urls')),
     # path("oauth/", include("social_django.urls")),
     # path('signup/', signup_view, name="signup"),
     # path('sent/', activation_sent_view, name="activation_sent"),

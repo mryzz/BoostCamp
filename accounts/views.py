@@ -19,9 +19,13 @@ from .models import Profile
 from .serializers import ProfileSerializer
 
 class ProfileViewSet(viewsets.ModelViewSet):
-    queryset = Profile.objects.all()
     serializer_class = ProfileSerializer
-
+    queryset = Profile.objects.all()
+    
+    def get_queryset(self):
+        queryset = Profile.objects.all()
+        ordering = self.request.query_params.get('ordering', 'created_at')
+        return queryset.order_by(ordering)
 
 
 # def activation_sent_view(request):

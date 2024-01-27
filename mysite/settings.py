@@ -31,8 +31,14 @@ INSTALLED_APPS = [
     # CSS for pages
     "bootstrap5",
     "accounts",
+    "myclass",
+    "bookings",
+    "common",
+    "notifications",
+    "reviews",
     "six",   
     'rest_framework',
+    'django_filters',
 ]
 
 MIDDLEWARE = [
