@@ -14,7 +14,10 @@ class Profile(models.Model):
     location = models.TextField()
     created_at = models.DateTimeField(default=timezone.now)
     signup_confirmation = models.BooleanField(default=False)
-
+    profile_picture = models.ImageField(upload_to='profile_pictures/', blank=True, null=True)
+    qualification_documents = models.FileField(upload_to='qualifications/', blank=True, null=True)
+    role = models.CharField(max_length=10, choices=[('student', 'Student'), ('coach', 'Coach')], default='student')
+    
     def __str__(self):
         return self.user.username
     
