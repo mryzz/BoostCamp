@@ -4,6 +4,7 @@ from django.urls import path, include, re_path
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api-auth/', include('rest_framework.urls')),
     path("accounts/", include('accounts.urls')),
     path('myclass/', include('myclass.urls')),
     # path("oauth/", include("social_django.urls")),

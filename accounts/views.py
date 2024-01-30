@@ -14,9 +14,14 @@
 # from django.contrib.auth.decorators import login_required
 
 # Restructure 
+from django.contrib.auth import authenticate
+from rest_framework.authtoken.models import Token
+from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework import viewsets
 from .models import Profile
 from .serializers import ProfileSerializer
+from rest_framework import status
 
 class ProfileViewSet(viewsets.ModelViewSet):
     serializer_class = ProfileSerializer
@@ -27,6 +32,21 @@ class ProfileViewSet(viewsets.ModelViewSet):
         ordering = self.request.query_params.get('ordering', 'created_at')
         return queryset.order_by(ordering)
 
+class UserLoginView(APIView):
+    def post(self, request):
+        # Get the username and password from the request data
+        username = request.data.get('username')
+        password = request.data.get('password')
+
+        # Authenticate the user
+        user = authenticate(request, username=username, password=password)
+
+        if user is not None:
+            # User is authenticated, generate or retrieve a token
+            token, created = Token.objects.get_or_create(user=user)
+            return Response({'token': token.key})
+        else:
+            return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
 
 # def activation_sent_view(request):
 #     return render(request, 'activation_sent.html')

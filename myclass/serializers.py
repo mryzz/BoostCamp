@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from .models import MyClass, Category, Availability, Location
+from django.contrib.auth.models import AnonymousUser
 
 class AvailabilitySerializer(serializers.ModelSerializer):
     class Meta:
@@ -52,11 +53,20 @@ class MyClassSerializer(serializers.ModelSerializer):
         location_data = validated_data.pop('location')
         location = Location.objects.create(**location_data)
 
+        # Extract student data
+        students_data = validated_data.pop('students', None)
+
         # Extract availability data
         availabilities_data = validated_data.pop('availability')
 
         # Get the coach info from the request context
-        coach = self.context['request'].user
+        coach = self.context['request'].user.profile
+
+        # Check if the user is authenticated and is not an AnonymousUser
+        if isinstance(coach, AnonymousUser):
+        # Handle unauthenticated user (raise an error or return a response)
+            raise ValueError("User must be authenticated to create a MyClass instance")
+
 
         # Remove 'coach' from validated_data if it exists
         validated_data.pop('coach', None)
@@ -64,6 +74,10 @@ class MyClassSerializer(serializers.ModelSerializer):
         # myclass = MyClass.objects.create(location=location, **validated_data)
         myclass = MyClass.objects.create(coach=coach, location=location, **validated_data)
         
+        # After the MyClass instance is created or updated, use the set() method on the students field to establish the many-to-many relationships.
+        if students_data:
+            myclass.students.set(students_data)
+
         # Process each availability item and associate it with MyClass
         for availability_data in availabilities_data:
             availability, created = Availability.objects.get_or_create(**availability_data)
