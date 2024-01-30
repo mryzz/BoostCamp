@@ -31,20 +31,40 @@ class CategoryRelatedField(serializers.RelatedField):
         except Category.DoesNotExist:
             raise serializers.ValidationError("Category with this name does not exist")
 
+class LocationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Location
+        fields = ['street_address', 'apt', 'block', 'postal_code', 'available_online', 'at_student_convenience']
+
 class MyClassSerializer(serializers.ModelSerializer):
     students = UsernameToProfileField(many=True, queryset=User.objects.all())
     coach = UsernameToProfileField(queryset=User.objects.all())
     category = CategoryRelatedField(queryset=Category.objects.all())
-    number_of_students = serializers.IntegerField(read_only=True)
     availability = AvailabilitySerializer(many=True)
+    location = LocationSerializer()
 
     class Meta:
         model = MyClass
-        fields = ['id', 'title', 'description', 'coach', 'dates_times', 'location', 'fees', 'duration', 'category', 'students', 'open_for_booking', 'number_of_students', 'created_on']
+        fields = ['id', 'title', 'description', 'coach', 'location', 'fees', 'category', 'students', 'open_for_booking', 'availability', 'created_on']
 
     def create(self, validated_data):
+        # Extract location data and create a Location instance
+        location_data = validated_data.pop('location')
+        location = Location.objects.create(**location_data)
+
+        # Extract availability data
         availabilities_data = validated_data.pop('availability')
-        myclass = MyClass.objects.create(**validated_data)
+
+        # Get the coach info from the request context
+        coach = self.context['request'].user
+
+        # Remove 'coach' from validated_data if it exists
+        validated_data.pop('coach', None)
+
+        # myclass = MyClass.objects.create(location=location, **validated_data)
+        myclass = MyClass.objects.create(coach=coach, location=location, **validated_data)
+        
+        # Process each availability item and associate it with MyClass
         for availability_data in availabilities_data:
             availability, created = Availability.objects.get_or_create(**availability_data)
             myclass.availability.add(availability)

@@ -11,3 +11,7 @@ class MyClassViewSet(viewsets.ModelViewSet):
     filterset_fields = ['category', 'fees']
     ordering_fields = ['created_on', 'fees']  # Add 'fees' to ordering fields
     ordering = ['created_on']  # Default ordering# Add 'fees' to ordering fields
+
+    # It passes the request context (user information to serializer) 
+    def perform_create(self, serializer):
+        serializer.save(creator=self.request.user)
