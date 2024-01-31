@@ -22,6 +22,8 @@ from rest_framework import viewsets
 from .models import Profile
 from .serializers import ProfileSerializer
 from rest_framework import status
+from rest_framework.authentication import TokenAuthentication
+from rest_framework.permissions import IsAuthenticated
 
 class ProfileViewSet(viewsets.ModelViewSet):
     serializer_class = ProfileSerializer
@@ -47,6 +49,26 @@ class UserLoginView(APIView):
             return Response({'token': token.key})
         else:
             return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+
+class UserSignUpView(APIView):
+    def post(self, request, *args, **kwargs):
+        serializer = ProfileSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"message": "User and profile created successfully"}, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class LogoutView(APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            # Delete the token to log out
+            request.user.auth_token.delete()
+            return Response({"success": "Successfully logged out."}, status=status.HTTP_200_OK)
+        except (AttributeError, Token.DoesNotExist):
+            return Response({"error": "Bad request or Token not found."}, status=status.HTTP_400_BAD_REQUEST)
 
 # def activation_sent_view(request):
 #     return render(request, 'activation_sent.html')

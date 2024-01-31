@@ -4,7 +4,7 @@ from .models import MyClass
 from .serializers import MyClassSerializer
 from rest_framework.authentication import SessionAuthentication, TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
-
+from .permissions import IsOwnerOrReadOnly
 
 #ModelViewSet automatically provides implementations for CRUD (create, read, update, and delete) operations.
 class MyClassViewSet(viewsets.ModelViewSet):
@@ -15,7 +15,7 @@ class MyClassViewSet(viewsets.ModelViewSet):
     ordering_fields = ['created_on', 'fees']  # Add 'fees' to ordering fields
     ordering = ['created_on']  # Default ordering# Add 'fees' to ordering fields
     authentication_classes = [SessionAuthentication, TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsOwnerOrReadOnly]
 
     # It passes the request context (user information to serializer) 
     def perform_create(self, serializer):
