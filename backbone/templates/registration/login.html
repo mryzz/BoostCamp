@@ -1,0 +1,17 @@
+{% extends "../layout/base.html" %} {% load static %} 
+
+{% block page_title %}
+  <h2>Log in</h2>
+{% endblock page_title %}
+
+{% block page_content %}
+<form method="post">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button type="submit">Log In</button>
+</form>
+<a href="/accounts/password_reset/">Forget your password?</a></br>
+<a href="/signup">Don't have an account yet? Sign up now!</a></br>
+{% endblock page_content %}
+
+

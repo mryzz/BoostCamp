@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  {% load bootstrap5 %} {% bootstrap_css %} {% bootstrap_javascript %}
+  <meta charset="utf-8" name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"/>
+  <title>Coach Craze</title>
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,700" rel="stylesheet">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"
+            crossorigin="anonymous" />
+</head>
+
+  <body class="container mt-5">
+    <h1>ClassCraze</h1>
+    <a href="../">Home</a>
+    <nav class="mb-3">
+      {% if user.is_authenticated %}
+      <p><a href="{% url 'logout' %}">Log Out</a></p>
+      <p> Hi, {{ user.username }}! </p>
+      {% else %}
+      <p>You are not logged in</p>
+      <a href="{% url 'login' %}">Log In</a>
+      {%endif %}
+    </nav>
+    <hr>
+    {% block page_title %}{% endblock page_title %}
+    {% block page_content %} {% endblock page_content %}
+  </body>
+</html>

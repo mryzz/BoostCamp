@@ -1,0 +1,17 @@
+{% extends "../layout/base.html" %} {% load static %}
+
+{% block page_content %}
+<h2>{{ category }}</h2>
+    {% for myclass in myclasses %}
+        <h3><a href="{% url 'myclass_detail' myclass.pk %}">{{ myclass.title }}</a></h4>
+        <small>
+            {{ myclass.created_on.date }} | Categories:
+            {% for category in myclass.categories.all %}
+                <a href="{% url 'myclass_category' category.name %}">
+                    {{ category.name }}
+                </a>
+            {% endfor %}
+        </small>
+        <p>{{ myclass.description | slice:":400" }}...</p>
+    {% endfor %} 
+{% endblock page_content %}
