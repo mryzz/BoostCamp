@@ -1,19 +1,24 @@
-import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
-import { createStackNavigator } from '@react-navigation/stack';
-import HomeScreen from './src/features/myClasses/ClassesListScreen.js'; // You'll create this screen next
+import "react-native-gesture-handler";
+import { StatusBar } from "expo-status-bar";
+import RootNavigation from "./src/navigation/root";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+import { useAuthStore } from "./src/store/useAuthStore";
+import FlashMessage from "react-native-flash-message";
 
-const Stack = createStackNavigator();
+export default function App() {
+  const user = useAuthStore((state) => state.user)
 
-function App() {
   return (
-    <NavigationContainer>
-      <Stack.Navigator>
-        <Stack.Screen name="Home" component={HomeScreen} />
-        {/* Add more screens here */}
-      </Stack.Navigator>
-    </NavigationContainer>
+    <SafeAreaProvider style={{ flex: 1 }}>
+      <StatusBar style="auto" />
+      <RootNavigation />
+      <FlashMessage
+        position="top"
+        animated
+        statusBarHeight={40}
+        titleStyle={{ fontFamily: "InterSoftMedium", fontSize: 16 }}
+        duration={3000}
+      />
+    </SafeAreaProvider>
   );
 }
-
-export default App;
