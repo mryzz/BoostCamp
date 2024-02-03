@@ -4,7 +4,7 @@ import LoginScreen from "../screens/auth/login";
 import SignupScreen from "../screens/auth/signup";
 import { TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, NavigationProp } from "@react-navigation/native";
 // import ForgotPasswordScreen from "../screens/auth/forgot-password";
 
 const Stack = createStackNavigator<AuthStackParamList>();
@@ -32,9 +32,9 @@ export default function AuthNavigation() {
         gestureDirection: "horizontal",
       }}
     >
-      <Stack.Screen name="login" component={LoginScreen} />
+      <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen
-        name="signup"
+        name="Signup"
         component={SignupScreen}
         options={{
           title: "create account",
@@ -51,7 +51,7 @@ export default function AuthNavigation() {
               }}
               onPress={goBack}
             >
-              <Ionicons name="ios-arrow-down" size={15} color={"coral"} />
+              <Ionicons name="arrow-down" size={15} color={"coral"} />
             </TouchableOpacity>
           ),
           ...TransitionPresets.ModalPresentationIOS,

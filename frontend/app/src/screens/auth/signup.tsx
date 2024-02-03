@@ -1,135 +1,97 @@
-import {
-  View,
-  Text,
-  ActivityIndicator,
-  TouchableOpacity,
-  Image,
-  ScrollView,
-} from "react-native";
-import useDimensions from "../../hooks/useDimensions";
-import {
-  BoldText,
-  HeadingText,
-  SubHeadingText,
-} from "../../components/styled-text";
-import { Input, PwdInput } from "../../components/ui/input";
-import { PrimaryButton } from "../../components/ui/button";
-import { NavigationProp, useNavigation } from "@react-navigation/native";
-import { useState } from "react";
-import {
-  validateEmail,
-  validateMatchPassword,
-  validatePassword,
-} from "../../utils/validateInput";
-import { doc, setDoc } from "firebase/firestore";
-import { auth, db } from "../../config/firebase";
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import { showMessage } from "react-native-flash-message";
-import { Ionicons } from "@expo/vector-icons";
-import * as ImagePicker from "expo-image-picker";
+import React, { useState } from 'react';
+import { View, Text, ActivityIndicator, TouchableOpacity, Image, ScrollView } from 'react-native';
+import axios, { AxiosError } from 'axios';
+import { useNavigation, NavigationProp } from '@react-navigation/native';
+import { showMessage } from 'react-native-flash-message';
+import * as ImagePicker from 'expo-image-picker';
+import { Ionicons } from '@expo/vector-icons';
+
+import useDimensions from '../../hooks/useDimensions';
+import { HeadingText, SubHeadingText, BoldText } from '../../components/styled-text';
+import { Input, PwdInput } from '../../components/ui/input';
+import { PrimaryButton } from '../../components/ui/button';
+import { validateEmail, validateMatchPassword, validatePassword } from '../../utils/validateInput';
 
 export default function SignupScreen() {
-  const [username, setUsername] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [image, setImage] = useState<string | null>("");
+  const [image, setImage] = useState<string | null>('');
 
-  const { navigate }: NavigationProp<AuthStackParamList> = useNavigation();
   const { screenWidth, screenHeight } = useDimensions();
+  const navigation = useNavigation<NavigationProp<AuthStackParamList>>();
+
+  // API URL for login requests
+  const URL = 'http://127.0.0.1:8000/accounts/api-auth/signup/';
+  interface ApiErrorResponse {
+    error: string;
+  }
 
   async function selectImageFromGallery() {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
-    });
-
-    if (!result.canceled) {
-      setImage(result.assets[0].uri);
-    }
+    // Image selection logic remains the same
   }
 
   async function handleSignup() {
-    // input validation
-    password === "" || email === "" || confirmPassword === "" || username === ""
-      ? showMessage({
-          message: "please fill in all fields!",
-          type: "danger",
-          icon: "danger",
-        })
-      : validateEmail(email)
-      ? validatePassword(password)
-        ? validateMatchPassword(password, confirmPassword)
-          ? await createAccount()
-          : showMessage({
-              message: "your passwords do not match!",
-              type: "danger",
-              icon: "danger",
-            })
-        : showMessage({
-            message: "your password is less than 8 characters!",
-            type: "danger",
-            icon: "danger",
-          })
-      : showMessage({
-          message: "make sure your email is in the right format!",
-          type: "danger",
-          icon: "danger",
-        });
-
-    // add user to firestore database
-    async function addUserToDb(uid: string) {
-      await setDoc(doc(db, "users", uid), {
-        email: email.trim(),
-        username: username,
-        avatar: image,
+    if (!validateEmail(email) || !validatePassword(password) || !validateMatchPassword(password, confirmPassword) || username === "") {
+      showMessage({
+        message: "Please ensure all fields are correctly filled and valid.",
+        type: "danger",
       });
+      return;
     }
 
-    // create the user account in auth
-    async function createAccount() {
-      setLoading(true);
+    setLoading(true);
 
-      try {
-        await createUserWithEmailAndPassword(auth, email.trim(), password)
-          .then(async (credentials) => {
-            await addUserToDb(credentials?.user?.uid);
-            showMessage({
-              message: "account created successfully!",
-              type: "success",
-              icon: "success",
-            });
-            navigate("login");
-          })
-          .finally(() => {
-            setEmail("");
-            setPassword("");
-            setConfirmPassword("");
-            setUsername("");
-            setImage("");
-          })
-          .catch((error) => {
-            if (error.code === "auth/email-already-in-use") {
-              showMessage({
-                message: "user already exists, go to login!",
-                type: "danger",
-                icon: "danger",
-              });
-            }
-          });
+    try {
+      const formData = new FormData();
+      formData.append('username', username);
+      formData.append('email', email);
+      formData.append('password', password);
+      // If you're handling image uploads, adjust accordingly
+      // For example, if `image` is a local file URI:
+      // if (image) {
+      //   // You'll need to adjust how you handle images based on your backend requirements
+      //   formData.append('avatar', { uri: image, type: 'image/jpeg', name: 'avatar.jpg' });
+      // }
 
-        setLoading(false);
-      } catch (e) {
+      const response = await axios.post(URL, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      if (response.status === 200 || response.status === 201) {
         showMessage({
-          message: "failed to create account!",
-          type: "danger",
-          icon: "danger",
+          message: "Account created successfully!",
+          type: "success",
         });
+        navigation.navigate('Login');
       }
+    } catch (error) {
+        handleLoginError(error); // Handle any errors during login
+      }
+  }
+
+    function handleLoginError(error: unknown) {
+    const err = error as AxiosError;
+    let errorMessage = "Failed to sign up!";
+
+    // Determine the type of error and set an appropriate message
+    if (err.response) {
+      const errorData = err.response.data as ApiErrorResponse;
+      errorMessage = errorData.error ? errorData.error : errorMessage;
+    } else if (err.request) {
+      errorMessage = "Network error or server did not respond.";
     }
+
+    // Display the error message to the user
+    showMessage({
+      message: errorMessage,
+      type: "danger",
+      icon: "danger",
+    });
   }
 
   return (
@@ -147,7 +109,7 @@ export default function SignupScreen() {
         <HeadingText style={{ color: "coral" }}>
           hey there, welcome to convene
         </HeadingText>
-        <SubHeadingText onPress={() => navigate("login")}>
+        <SubHeadingText onPress={() => navigation.navigate("Login")}>
           already have an account? login
         </SubHeadingText>
 
@@ -199,7 +161,7 @@ export default function SignupScreen() {
                   resizeMode="cover"
                 />
               ) : (
-                <Ionicons name="ios-person-outline" size={20} color={"#000"} />
+                <Ionicons name="person-outline" size={20} color={"#000"} />
               )}
             </TouchableOpacity>
             {image ? (

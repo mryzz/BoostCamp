@@ -1,112 +1,110 @@
-import { ActivityIndicator, View } from "react-native";
-import useDimensions from "../../hooks/useDimensions";
-import { HeadingText, SubHeadingText } from "../../components/styled-text";
-import { Input, PwdInput } from "../../components/ui/input";
-import { PrimaryButton } from "../../components/ui/button";
-import { NavigationProp, useNavigation } from "@react-navigation/native";
-import { useState } from "react";
-import { useAuthStore } from "../../store/useAuthStore";
-import { validateEmail, validatePassword } from "../../utils/validateInput";
-import { showMessage } from "react-native-flash-message";
-import { User, signInWithEmailAndPassword } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
-import { auth, db } from "../../config/firebase";
+import { useState, useEffect } from 'react';
+import { ActivityIndicator, View, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons'; // Assuming you're using Expo
+import { showMessage } from 'react-native-flash-message';
+import { useNavigation, CommonActions, NavigationProp } from '@react-navigation/native';
+import axios, { AxiosError } from 'axios';
+
+import useDimensions from '../../hooks/useDimensions';
+import { HeadingText, SubHeadingText } from '../../components/styled-text';
+import { Input, PwdInput } from '../../components/ui/input';
+import { PrimaryButton } from '../../components/ui/button';
+import { useAuthStore } from '../../store/useAuthStore';
+import { validateEmail, validatePassword } from '../../utils/validateInput';
 
 export default function LoginScreen() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  // State hooks for managing email, password, and loading state
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-
-  const { navigate }: NavigationProp<AuthStackParamList> = useNavigation();
+  // Hooks for navigation and screen dimensions
+  const navigation = useNavigation<NavigationProp<AuthStackParamList>>();
   const { screenWidth, screenHeight } = useDimensions();
-  const setUser = useAuthStore((state) => state.setUser);
-  const setIsLoggedIn = useAuthStore((state) => state.setIsLoggedIn);
 
+  // Zustand store for managing authentication state
+  const { isLoggedIn, user, setUser, setIsLoggedIn } = useAuthStore();
+
+  // API URL for login requests
+  const URL = 'http://127.0.0.1:8000/accounts/api-auth/login/';
+  interface ApiErrorResponse {
+    error: string;
+  }
+
+  function resetStack() {
+    navigation.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [{ name: 'home-stack' }], // Name of the route defined in RootStackParamList
+      })
+    );
+  }
+
+  // Effect hook to navigate to a protected route if already logged in
+  useEffect(() => {
+    // Check the authentication state when the component mounts
+    if (isLoggedIn && user.token) {
+      resetStack;
+    }
+  }, [isLoggedIn, user.token, navigation]);
+
+// Function to handle the login process
   async function handleLogin() {
-    // input validation
-    password === "" || email === ""
-      ? showMessage({
-          message: "please fill in all fields!",
-          type: "danger",
-          icon: "danger",
-        })
-      : validateEmail(email.trim())
-      ? validatePassword(password)
-        ? await loginUser()
-        : showMessage({
-            message: "your password is less than 8 characters!",
-            type: "danger",
-            icon: "danger",
-          })
-      : showMessage({
-          message: "make sure your email is in the right format!",
-          type: "danger",
-          icon: "danger",
-        });
-
-    // fetch user data from the db & set states
-    async function fetchUser(user: User) {
-      const docRef = doc(db, "users", user.uid);
-      const docSnap = await getDoc(docRef);
-
-      if (docSnap.exists()) {
-        setUser({
-          uid: user.uid,
-          email: user.email!,
-          username: docSnap.data().username,
-          avatar: docSnap.data().avatar,
-        });
-      } else {
-        showMessage({
-          message: "no document found!",
-          type: "danger",
-          icon: "danger",
-        });
-      }
+    // Validate email and password before attempting to log in
+    if (!validateEmail(email.trim()) || !validatePassword(password)) {
+      showMessage({
+        message: "Please ensure all fields are correctly filled and valid.",
+        type: "danger",
+        icon: "danger",
+      });
       return;
     }
 
-    async function loginUser() {
-      setLoading(true);
+    setLoading(true);
+    try {
+      // Attempt to log in via the API
+      const response = await axios.post(URL, {
+        email: email.trim(),
+        password: password,
+      });
 
-      try {
-        await signInWithEmailAndPassword(auth, email.trim(), password)
-          .then(async (credentials) => {
-            const user = credentials.user;
-            await fetchUser(user);
-            showMessage({
-              message: "successfully logged in!",
-              type: "success",
-              icon: "success",
-            });
-            setIsLoggedIn(true);
-          })
-          .finally(() => {
-            setEmail("");
-            setPassword("");
-          })
-          .catch((error) => {
-            if (
-              error.code === "auth/wrong-password" ||
-              error.code === "auth/user-not-found"
-            ) {
-              showMessage({
-                message: "invalid credentials, try again!",
-                type: "danger",
-                icon: "danger",
-              });
-            }
-          });
-
-        setLoading(false);
-      } catch (e) {
+      // Successful login response handling
+      if (response.data && response.status === 200) {
+        const { token, ...userDetails } = response.data;
+        setUser({ ...userDetails, token }); // Update user state with details and token
+        setIsLoggedIn(true); // Set logged in state to true
         showMessage({
-          message: "failed to log in!",
-          type: "danger",
-          icon: "danger",
+          message: "Successfully logged in!",
+          type: "success",
+          icon: "success",
         });
+        resetStack(); // Navigate to a protected route
       }
+    } catch (error) {
+      handleLoginError(error); // Handle any errors during login
+    } finally {
+      setLoading(false); // Reset loading state
     }
+  }
+
+  // Function to handle login errors and provide user feedback
+  function handleLoginError(error: unknown) {
+    const err = error as AxiosError;
+    let errorMessage = "Failed to log in!";
+
+    // Determine the type of error and set an appropriate message
+    if (err.response) {
+      const errorData = err.response.data as ApiErrorResponse;
+      errorMessage = errorData.error ? errorData.error : errorMessage;
+    } else if (err.request) {
+      errorMessage = "Network error or server did not respond.";
+    }
+
+    // Display the error message to the user
+    showMessage({
+      message: errorMessage,
+      type: "danger",
+      icon: "danger",
+    });
   }
 
   return (
@@ -125,8 +123,8 @@ export default function LoginScreen() {
         <HeadingText style={{ color: "coral" }}>
           welcome back to convene
         </HeadingText>
-        <SubHeadingText onPress={() => navigate("signup")}>
-          don't have an account? create one now
+        <SubHeadingText onPress={() => navigation.navigate('Signup')}>
+          Don't have an account? create one now
         </SubHeadingText>
 
         <View style={{ marginTop: 32, gap: 16 }}>
@@ -141,9 +139,9 @@ export default function LoginScreen() {
               onChangeText={(e) => setPassword(e)}
               value={password}
             />
-            <SubHeadingText onPress={() => navigate("forgot-password")}>
+            {/* <SubHeadingText onPress={() => navigate("forgot-password")}>
               forgot password? reset it
-            </SubHeadingText>
+            </SubHeadingText> */}
           </View>
         </View>
       </View>

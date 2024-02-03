@@ -4,8 +4,8 @@ type RootStackParamList = {
   "home-stack": undefined;
 };
 type AuthStackParamList = {
-  login: undefined;
-  signup: undefined;
+  Login: undefined;
+  Signup: undefined;
   "forgot-password": undefined;
 };
 type HomeStackParamList = {
