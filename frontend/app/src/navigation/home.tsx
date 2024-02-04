@@ -6,6 +6,7 @@ import HomeScreen from "../screens/home";
 // import AddEventScreen from "../screens/home/add-event";
 import { TouchableOpacity } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import { Ionicons } from "@expo/vector-icons";
 // import { Ionicons } from "@expo/vector-icons";
 // import { BoldText } from "../components/styled-text";
 // import AddUnsplashImage from "../screens/home/unsplash";
@@ -14,7 +15,6 @@ import { useNavigation } from "@react-navigation/native";
 const Stack = createStackNavigator();
 
 const HomeNavigation = () => {
-  const { goBack } = useNavigation();
 
   return (
     <Stack.Navigator
@@ -37,9 +37,8 @@ const HomeNavigation = () => {
       }}
     >
       <Stack.Screen
-        name="home"
+        name="Home"
         component={HomeScreen}
-        // options={{ headerShown: false }}
       />
       {/* <Stack.Screen
         name="add-event"

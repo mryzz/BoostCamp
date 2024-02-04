@@ -16,6 +16,7 @@ export interface AuthStore {
   isLoggedIn: boolean;
   setIsLoggedIn: (isLoggedIn: boolean) => void;
   setToken: (token: string) => void; 
+  setLogout: () => void;
 }
 
 export const useAuthStore = create(
@@ -31,6 +32,7 @@ export const useAuthStore = create(
       isLoggedIn: false,
       setUser: (user) => set((state) => ({ user })),
       setIsLoggedIn: (isLoggedIn: boolean) => set((state) => ({ isLoggedIn })),
+      setLogout: () => set({ user: { uid: "", email: "", username: "", avatar: "", token: "" }, isLoggedIn: false }),
       setToken: (token: string) => set((state) => ({ user: { ...state.user, token }})),
     }),
     {
@@ -39,3 +41,4 @@ export const useAuthStore = create(
     }
   )
 );
+
