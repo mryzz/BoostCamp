@@ -24,7 +24,7 @@ export default function SignupScreen() {
   const navigation = useNavigation<NavigationProp<AuthStackParamList>>();
 
   // API URL for login requests
-  const URL = 'http://127.0.0.1:8000/accounts/api-auth/signup/';
+  const URL = 'http://192.168.1.160:8000/accounts/api-auth/signup/';
   interface ApiErrorResponse {
     error: string;
   }
@@ -107,7 +107,7 @@ export default function SignupScreen() {
     >
       <View>
         <HeadingText style={{ color: "coral" }}>
-          hey there, welcome to convene
+          Hey there, welcome to ClassGo
         </HeadingText>
         <SubHeadingText onPress={() => navigation.navigate("Login")}>
           already have an account? login

@@ -24,7 +24,7 @@ const RootNavigation = () => {
         }}
       >
         {isLoggedIn ? (
-          <Stack.Screen name="home-stack" component={HomeNavigation} /> 
+          <Stack.Screen name="root-home-stack" component={HomeNavigation} /> 
           ) : ( 
           <Stack.Screen name="auth-stack" component={AuthNavigation} />
         )}

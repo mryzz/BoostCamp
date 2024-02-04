@@ -25,7 +25,7 @@ export default function LoginScreen() {
   const { isLoggedIn, user, setUser, setIsLoggedIn } = useAuthStore();
 
   // API URL for login requests
-  const URL = 'http://127.0.0.1:8000/accounts/api-auth/login/';
+  const URL = 'http://192.168.1.160:8000/accounts/api-auth/login/';
   interface ApiErrorResponse {
     error: string;
   }
@@ -43,7 +43,7 @@ export default function LoginScreen() {
   useEffect(() => {
     // Check the authentication state when the component mounts
     if (isLoggedIn && user.token) {
-      resetStack;
+      resetStack();
     }
   }, [isLoggedIn, user.token, navigation]);
 
@@ -61,9 +61,11 @@ export default function LoginScreen() {
 
     setLoading(true);
     try {
+      console.log('loading');
       // Attempt to log in via the API
       const response = await axios.post(URL, {
-        email: email.trim(),
+        // Need change from username to email
+        username: email.trim(),
         password: password,
       });
 
@@ -80,6 +82,7 @@ export default function LoginScreen() {
         resetStack(); // Navigate to a protected route
       }
     } catch (error) {
+      console.log(error)
       handleLoginError(error); // Handle any errors during login
     } finally {
       setLoading(false); // Reset loading state
@@ -121,7 +124,7 @@ export default function LoginScreen() {
     >
       <View>
         <HeadingText style={{ color: "coral" }}>
-          welcome back to convene
+          Welcome back to ClassGo
         </HeadingText>
         <SubHeadingText onPress={() => navigation.navigate('Signup')}>
           Don't have an account? create one now
@@ -147,7 +150,7 @@ export default function LoginScreen() {
       </View>
 
       <PrimaryButton
-        title={loading ? <ActivityIndicator color={"#fff"} /> : "login"}
+        title={loading ? <ActivityIndicator color={"#fff"} /> : "Login"}
         onPress={handleLogin}
       />
     </View>

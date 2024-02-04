@@ -14,8 +14,7 @@ SECRET_KEY = 'django-insecure-qm3j&s2vi!6af08%9_o!ls^r+d97ebi1om+#!ch6nrc&d#o_0(
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = ['192.168.1.160', 'localhost', '127.0.0.1']
 
 # Application definition
 
@@ -150,3 +149,5 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Something wrong with this email backend, now the signup confirmation doesnt work :(
 EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
 EMAIL_FILE_PATH = os.path.join(BASE_DIR, "sent_emails")
+
+CORS_ALLOWED_ORIGINS = ['*']

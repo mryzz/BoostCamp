@@ -11,7 +11,7 @@ import { useNavigation } from "@react-navigation/native";
 // import AddUnsplashImage from "../screens/home/unsplash";
 // import Settings from "../screens/home/settings";
 
-const Stack = createStackNavigator<HomeStackParamList>();
+const Stack = createStackNavigator();
 
 const HomeNavigation = () => {
   const { goBack } = useNavigation();
