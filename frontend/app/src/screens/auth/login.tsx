@@ -64,8 +64,7 @@ export default function LoginScreen() {
       console.log('loading');
       // Attempt to log in via the API
       const response = await axios.post(URL, {
-        // Need change from username to email
-        username: email.trim(),
+        email: email.trim(),
         password: password,
       });
 

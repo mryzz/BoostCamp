@@ -32,7 +32,6 @@ INSTALLED_APPS = [
     "accounts",
     "myclass",
     "bookings",
-    "common",
     "notifications",
     "reviews",
     "six",   

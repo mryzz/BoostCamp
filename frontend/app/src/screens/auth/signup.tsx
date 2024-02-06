@@ -13,7 +13,6 @@ import { PrimaryButton } from '../../components/ui/button';
 import { validateEmail, validateMatchPassword, validatePassword } from '../../utils/validateInput';
 
 export default function SignupScreen() {
-  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -34,7 +33,7 @@ export default function SignupScreen() {
   }
 
   async function handleSignup() {
-    if (!validateEmail(email) || !validatePassword(password) || !validateMatchPassword(password, confirmPassword) || username === "") {
+    if (!validateEmail(email) || !validatePassword(password) || !validateMatchPassword(password, confirmPassword)) {
       showMessage({
         message: "Please ensure all fields are correctly filled and valid.",
         type: "danger",
@@ -46,7 +45,6 @@ export default function SignupScreen() {
 
     try {
       const formData = new FormData();
-      formData.append('username', username);
       formData.append('email', email);
       formData.append('password', password);
       // If you're handling image uploads, adjust accordingly
@@ -114,11 +112,6 @@ export default function SignupScreen() {
         </SubHeadingText>
 
         <View style={{ marginTop: 32, gap: 16 }}>
-          <Input
-            placeholder="create a unique username"
-            onChangeText={(e) => setUsername(e)}
-            value={username}
-          />
           <Input
             placeholder="email address"
             onChangeText={(e) => setEmail(e)}
