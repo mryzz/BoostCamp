@@ -1,33 +1,44 @@
+from django.contrib.auth import get_user_model
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import viewsets
-from .models import Profile
-from .serializers import ProfileSerializer
+from .models import BasicProfile, CoachProfile
+from .serializers import BasicProfileSerializer, CoachProfileSerializer, CustomUserSerializer
 from rest_framework import status
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 
-class ProfileViewSet(viewsets.ModelViewSet):
-    serializer_class = ProfileSerializer
-    queryset = Profile.objects.all()
+User = get_user_model()
+
+class BasicProfileViewSet(viewsets.ModelViewSet):
+    serializer_class = BasicProfileSerializer
+    queryset = BasicProfile.objects.all()
+
     def get_queryset(self):
-        queryset = Profile.objects.all()
+        queryset = BasicProfile.objects.all()
+        ordering = self.request.query_params.get('ordering', 'created_at')
+        return queryset.order_by(ordering)
+
+class CoachProfileViewSet(viewsets.ModelViewSet):
+    serializer_class = CoachProfileSerializer
+    queryset = CoachProfile.objects.all()
+
+    def get_queryset(self):
+        queryset = CoachProfile.objects.all()
         ordering = self.request.query_params.get('ordering', 'created_at')
         return queryset.order_by(ordering)
 
 class UserLoginView(APIView):
     def post(self, request):
-        # Get the email and password from the request data
         email = request.data.get('email')
         password = request.data.get('password')
-
-        # Authenticate the user
-        user = authenticate(request, email=email, password=password)
+        
+        # Assuming your User model has an email field and is used as a username field
+        user = authenticate(username=email, password=password)
 
         if user is not None:
-            # User is authenticated, generate or retrieve a token
             token, created = Token.objects.get_or_create(user=user)
             return Response({'token': token.key})
         else:
@@ -35,11 +46,16 @@ class UserLoginView(APIView):
 
 class UserSignUpView(APIView):
     def post(self, request, *args, **kwargs):
-        serializer = ProfileSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({"message": "User and profile created successfully"}, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        user_serializer = CustomUserSerializer(data=request.data.get('user'))
+        if user_serializer.is_valid():
+            user = user_serializer.save()
+            profile_data = request.data.get('profile')
+            profile_serializer = BasicProfileSerializer(data=profile_data, context={'request': request})
+            if profile_serializer.is_valid():
+                profile_serializer.save(user=user)
+                return Response({"message": "User and profile created successfully"}, status=status.HTTP_201_CREATED)
+            return Response(profile_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(user_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class LogoutView(APIView):
     authentication_classes = [TokenAuthentication]
@@ -47,7 +63,6 @@ class LogoutView(APIView):
 
     def post(self, request):
         try:
-            # Delete the token to log out
             request.user.auth_token.delete()
             return Response({"success": "Successfully logged out."}, status=status.HTTP_200_OK)
         except (AttributeError, Token.DoesNotExist):

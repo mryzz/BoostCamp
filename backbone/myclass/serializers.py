@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from django.contrib.auth.models import User
+from ..accounts.models import CustomUser
 from .models import MyClass, Category, Availability, Location
 from django.contrib.auth.models import AnonymousUser
 
@@ -11,15 +11,15 @@ class AvailabilitySerializer(serializers.ModelSerializer):
 # UsernameToProfileField is a custom field that overrides the to_representation method to display the username and the to_internal_value method to convert the incoming username to a Profile object.
 class UsernameToProfileField(serializers.RelatedField):
     def to_representation(self, value):
-        return value.user.username
+        return value.user.email
 
     def to_internal_value(self, data):
         try:
-            user = User.objects.get(username=data)
+            user = CustomUser.objects.get(email=data)
             return user.profile  # Assuming a related_name 'profile' from User to Profile
-        except User.DoesNotExist:
-            raise serializers.ValidationError("User with this username does not exist")
-        except User.profile.RelatedObjectDoesNotExist:
+        except CustomUser.DoesNotExist:
+            raise serializers.ValidationError("User with this email does not exist")
+        except CustomUser.profile.RelatedObjectDoesNotExist:
             raise serializers.ValidationError("Profile for this user does not exist")
 
 class CategoryRelatedField(serializers.RelatedField):
@@ -38,8 +38,8 @@ class LocationSerializer(serializers.ModelSerializer):
         fields = ['street_address', 'apt', 'block', 'postal_code', 'available_online', 'at_student_convenience']
 
 class MyClassSerializer(serializers.ModelSerializer):
-    students = UsernameToProfileField(many=True, queryset=User.objects.all())
-    coach = UsernameToProfileField(queryset=User.objects.all())
+    students = UsernameToProfileField(many=True, queryset=CustomUser.objects.all())
+    coach = UsernameToProfileField(queryset=CustomUser.objects.all())
     category = CategoryRelatedField(queryset=Category.objects.all())
     availability = AvailabilitySerializer(many=True)
     location = LocationSerializer()
@@ -85,9 +85,20 @@ class MyClassSerializer(serializers.ModelSerializer):
         return myclass
     
     def update(self, instance, validated_data):
+        location_data = validated_data.get('location')
+        if location_data:
+            for attr, value in location_data.items():
+                setattr(instance.location, attr, value)
+            instance.location.save()
+
+        students_data = validated_data.get('students')
+        if students_data is not None:
+            instance.students.set(students_data)
+
+        availabilities_data = validated_data.pop('availability', [])
         instance.availability.clear()
-        availabilities_data = validated_data.pop('availability')
         for availability_data in availabilities_data:
-            availability, created = Availability.objects.get_or_create(**availability_data)
+            availability, _ = Availability.objects.get_or_create(**availability_data)
             instance.availability.add(availability)
+
         return super().update(instance, validated_data)
