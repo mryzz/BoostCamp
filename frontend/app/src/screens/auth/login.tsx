@@ -34,7 +34,7 @@ export default function LoginScreen() {
     navigation.dispatch(
       CommonActions.reset({
         index: 0,
-        routes: [{ name: 'home-stack' }], // Name of the route defined in RootStackParamList
+        routes: [{ name: 'root-home-stack' }], // Name of the route defined in RootStackParamList
       })
     );
   }
