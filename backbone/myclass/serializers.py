@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from ..accounts.models import CustomUser
+from accounts.models import CustomUser
 from .models import MyClass, Category, Availability, Location
 from django.contrib.auth.models import AnonymousUser
 

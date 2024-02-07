@@ -55,7 +55,7 @@ class Availability(models.Model):
 class MyClass(models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField()
-    coach = models.ForeignKey(CoachProfile, on_delete=models.CASCADE, related_name='coached_classes')  # Renamed from 'creator' to 'coach'
+    coach = models.ForeignKey(CoachProfile, on_delete=models.CASCADE, related_name='coached_classes', null=True, blank=True)  # Create a second migration to alter the field to be non-nullable.
     location = models.OneToOneField(Location, on_delete=models.CASCADE, related_name='myclass')
     availability = models.ManyToManyField(Availability, related_name='classes')
     fees = models.DecimalField(max_digits=6, decimal_places=0)
