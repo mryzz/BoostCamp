@@ -46,17 +46,39 @@ class UserLoginView(APIView):
 
 class UserSignUpView(APIView):
     def post(self, request, *args, **kwargs):
-        user_serializer = CustomUserSerializer(data=request.data.get('user'))
+        user_serializer = CustomUserSerializer(data=request.data)
         if user_serializer.is_valid():
             user = user_serializer.save()
-            profile_data = request.data.get('profile')
-            profile_serializer = BasicProfileSerializer(data=profile_data, context={'request': request})
-            if profile_serializer.is_valid():
-                profile_serializer.save(user=user)
-                return Response({"message": "User and profile created successfully"}, status=status.HTTP_201_CREATED)
-            return Response(profile_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"message": "User created successfully", "user_id": user.id}, status=status.HTTP_201_CREATED)
         return Response(user_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+class CreateOrUpdateBasicProfile(APIView):
+    permission_classes = [IsAuthenticated]
+    def post(self, request, *args, **kwargs):
+        try:
+            profile, created = BasicProfile.objects.get_or_create(user=request.user)
+            serializer = BasicProfileSerializer(profile, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response({"message": "Basic profile created or updated successfully"}, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
+class CreateOrUpdateCoachProfile(APIView):
+    permission_classes = [IsAuthenticated]
+    def post(self, request, *args, **kwargs):
+        basic_profile, _ = BasicProfile.objects.get_or_create(user=request.user)
+        try:
+            coach_profile, created = CoachProfile.objects.get_or_create(basic_profile=basic_profile)
+            serializer = CoachProfileSerializer(coach_profile, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response({"message": "Coach profile created or updated successfully"}, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
 class LogoutView(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]

@@ -17,6 +17,7 @@ class BasicProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = BasicProfile
         fields = ['user', 'first_name', 'last_name', 'phone_number', 'gender', 'location', 'profile_picture', 'introduction']
+        read_only_fields = ('user',)
 
     def create(self, validated_data):
         user_data = validated_data.pop('user')
@@ -30,6 +31,7 @@ class CoachProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = CoachProfile
         fields = ['basic_profile', 'title', 'specialties', 'experience', 'achievements', 'certification_name', 'certification', 'years_of_experience', 'testimonials', 'institution', 'field_of_study', 'education_certification', 'linkedin_url']
+        read_only_fields = ('basic_profile',)
 
     def create(self, validated_data):
         basic_profile_data = validated_data.pop('basic_profile')
