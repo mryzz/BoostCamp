@@ -3,16 +3,30 @@ import { useEffect, useState } from "react";
 import { FontAwesome } from "@expo/vector-icons";
 import * as SplashScreen from "expo-splash-screen";
 
-export default function useCachedResources() {
-  const [isLoadingComplete, setLoadingComplete] = useState(false);
 
-  //Load any resources or data that we need prior to rendering the app
+interface UseCachedResourcesResult {
+  isLoadingComplete: boolean;
+  loadingError: string | null;
+}
+// TypeScript: Define the return type of the hook
+export default function useCachedResources(): UseCachedResourcesResult {
+  const [isLoadingComplete, setLoadingComplete] = useState<boolean>(false);
+  const [loadingError, setLoadingError] = useState<string | null>(null);
+
   useEffect(() => {
+    let timeoutHandle: ReturnType<typeof setTimeout>;
+
     async function loadResourcesAndDataAsync() {
       try {
         SplashScreen.preventAutoHideAsync();
 
-        // Load fonts
+        timeoutHandle = setTimeout(() => {
+          if (!isLoadingComplete) {
+            setLoadingError('Loading timeout: The app took too long to start.');
+            SplashScreen.hideAsync();
+          }
+        }, 8000);
+
         await Font.loadAsync({
           InterSoftBold: require("../assets/fonts/InterSoft-Bold.otf"),
           InterSoftSemiBold: require("../assets/fonts/InterSoft-Semibold.otf"),
@@ -20,17 +34,21 @@ export default function useCachedResources() {
           InterSoftRegular: require("../assets/fonts/InterSoft-Regular.otf"),
           ...FontAwesome.font,
         });
-      } catch (e) {
-        // We might want to provide this error information to an error reporting service
-        alert(e);
-      } finally {
+
         setLoadingComplete(true);
-        SplashScreen.hideAsync();
+      } catch (e: any) {
+        setLoadingError(e.message);
+      } finally {
+        clearTimeout(timeoutHandle);
+        if (!loadingError) {
+          SplashScreen.hideAsync();
+        }
       }
     }
 
     loadResourcesAndDataAsync();
   }, []);
 
-  return isLoadingComplete;
+  // TypeScript: Specify the return type explicitly
+  return { isLoadingComplete, loadingError };
 }

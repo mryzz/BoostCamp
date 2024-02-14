@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, ActivityIndicator, TouchableOpacity, Image, ScrollView } from 'react-native';
-import axios, { AxiosError } from 'axios';
+import axios, { AxiosError, AxiosResponse } from 'axios';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { showMessage } from 'react-native-flash-message';
 import * as ImagePicker from 'expo-image-picker';
@@ -11,6 +11,7 @@ import { HeadingText, SubHeadingText, BoldText } from '../../components/styled-t
 import { Input, PwdInput } from '../../components/ui/input';
 import { PrimaryButton } from '../../components/ui/button';
 import { validateEmail, validateMatchPassword, validatePassword } from '../../utils/validateInput';
+import { useAuthStore } from '../../store/useAuthStore';
 
 export default function SignupScreen() {
   const [email, setEmail] = useState('');
@@ -21,58 +22,103 @@ export default function SignupScreen() {
 
   const { screenWidth, screenHeight } = useDimensions();
   const navigation = useNavigation<NavigationProp<AuthStackParamList>>();
+  const { setHasJustSignedUp, setIsLoggedIn } = useAuthStore();
 
   // API URL for login requests
-  const URL = 'http://192.168.1.160:8000/accounts/api-auth/signup/';
+  const URL = 'http://192.168.1.160:8000/accounts/signup/';
   interface ApiErrorResponse {
     error: string;
   }
+
+  interface SignupSuccessResponse {
+    message: string; // Adjust based on your API's response structure
+  }
+
+  const handleSignUpSuccess = () => {
+    setHasJustSignedUp(true);
+    setIsLoggedIn(true);
+  };
 
   async function selectImageFromGallery() {
     // Image selection logic remains the same
   }
 
-  async function handleSignup() {
-    if (!validateEmail(email) || !validatePassword(password) || !validateMatchPassword(password, confirmPassword)) {
-      showMessage({
-        message: "Please ensure all fields are correctly filled and valid.",
-        type: "danger",
-      });
-      return;
-    }
+async function handleSignup() {
+  if (!validateEmail(email) || !validatePassword(password) || !validateMatchPassword(password, confirmPassword)) {
+    showMessage({
+      message: "Please ensure all fields are correctly filled and valid.",
+      type: "danger",
+    });
+    return;
+  }
 
-    setLoading(true);
+  setLoading(true);
 
-    try {
-      const formData = new FormData();
-      formData.append('email', email);
-      formData.append('password', password);
-      // If you're handling image uploads, adjust accordingly
-      // For example, if `image` is a local file URI:
-      // if (image) {
-      //   // You'll need to adjust how you handle images based on your backend requirements
-      //   formData.append('avatar', { uri: image, type: 'image/jpeg', name: 'avatar.jpg' });
-      // }
+  // Create a promise that rejects after 7 seconds
+  const timeoutPromise = new Promise((resolve, reject) => {
+    setTimeout(() => reject(new Error('Request timed out')), 7000);
+  });
 
-      const response = await axios.post(URL, formData, {
+  try {
+    const formData = new FormData();
+    formData.append('email', email);
+    formData.append('password', password);
+
+    // Race the axios request against the timeout
+    const result = await Promise.race([
+      axios.post(URL, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
+      }),
+      timeoutPromise
+    ]);
+
+    // Explicitly assert the type of the response after the race
+    // Note: This assumes the result is of SignupSuccessResponse and not the error from timeout
+    const response = result as AxiosResponse<SignupSuccessResponse>;
+
+    if (response.status === 200 || response.status === 201) {
+      showMessage({
+        message: "Account created successfully!",
+        type: "success",
       });
+      handleSignUpSuccess();
+    }
+  } catch (error) {
+    setLoading(false); // Ensure loading state is reset
 
-      if (response.status === 200 || response.status === 201) {
-        showMessage({
-          message: "Account created successfully!",
-          type: "success",
-        });
-        navigation.navigate('Login');
+    // Asserting error type as AxiosError
+    if (axios.isAxiosError(error)) {
+      let errorMessage = "Failed to sign up!";
+      if (error.response) {
+        const errorData = error.response.data as ApiErrorResponse;
+        errorMessage = errorData.error ? errorData.error : errorMessage;
+      } else if (error.request) {
+        errorMessage = "Network error or server did not respond.";
       }
-    } catch (error) {
-        handleLoginError(error); // Handle any errors during login
-      }
+      showMessage({
+        message: errorMessage,
+        type: "danger",
+        icon: "danger",
+      });
+    } else if (error instanceof Error && error.message === 'Request timed out') {
+      // Handle timeout specific error
+      showMessage({
+        message: "Signup request timed out, please try again.",
+        type: "danger",
+      });
+    } else {
+      // Handle other errors that might not be Axios errors
+      showMessage({
+        message: "An unexpected error occurred.",
+        type: "danger",
+      });
+    }
   }
+}
 
-    function handleLoginError(error: unknown) {
+    function handleSignupError(error: unknown) {
     const err = error as AxiosError;
     let errorMessage = "Failed to sign up!";
 
@@ -147,7 +193,7 @@ export default function SignupScreen() {
                 justifyContent: "center",
               }}
             >
-              {image ? (
+              {/* {image ? (
                 <Image
                   source={{ uri: image }}
                   style={{ width: 100, height: 100, borderRadius: 50 }}
@@ -155,13 +201,13 @@ export default function SignupScreen() {
                 />
               ) : (
                 <Ionicons name="person-outline" size={20} color={"#000"} />
-              )}
+              )} */}
             </TouchableOpacity>
-            {image ? (
+            {/* {image ? (
               <BoldText>upload a new avatar</BoldText>
             ) : (
               <BoldText>upload an avatar</BoldText>
-            )}
+            )} */}
           </View>
         </View>
       </View>

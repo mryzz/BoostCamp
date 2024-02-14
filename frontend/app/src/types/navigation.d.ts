@@ -1,7 +1,8 @@
 //navigation
 type RootStackParamList = {
   "auth-stack": undefined;
-  "root-home-stack": undefined;
+  "initial-setup-stack": undefined;
+  "home-stack": undefined;
 };
 type AuthStackParamList = {
   Login: undefined;
@@ -13,4 +14,9 @@ type HomeStackParamList = {
   "add-event": undefined;
   unsplash: undefined;
   settings: undefined;
+};
+
+type InitialSetupStackParamList = {
+  "Introduction": undefined;
+  "setupForm": undefined;
 };

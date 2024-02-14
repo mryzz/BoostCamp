@@ -1,4 +1,6 @@
 import "react-native-gesture-handler";
+import { ActivityIndicator } from 'react-native';
+import React from 'react';
 import { StatusBar } from "expo-status-bar";
 import RootNavigation from "./src/navigation/root";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
@@ -6,10 +8,17 @@ import FlashMessage from "react-native-flash-message";
 import useCachedResources from './src/hooks/useCachedResources'
 
 export default function App() {
-  const isLoadingComplete = useCachedResources();
+  const { isLoadingComplete, loadingError } = useCachedResources()
 
   if (!isLoadingComplete) {
-    return null; // Or some loading indicator
+    // Render a loading indicator while fonts are loading
+    return <ActivityIndicator size="large" />;
+  }
+
+  if (loadingError) {
+  // Show an error message or alert
+  alert(loadingError);
+  return; // Optional: You might want to return an error screen here
   }
 
   return (
