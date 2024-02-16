@@ -2,44 +2,101 @@ import {
   TransitionPresets,
   createStackNavigator,
 } from "@react-navigation/stack";
-import HomeScreen from "../screens/home";
+import HomeScreen from "../screens/home/index";
+import ProfileScreen from "../screens/home/profile";
+import NotificationScreen from "../screens/home/notification";
 // import AddEventScreen from "../screens/home/add-event";
-import { TouchableOpacity } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { RouteProp } from '@react-navigation/native';
 import { Ionicons } from "@expo/vector-icons";
-// import { Ionicons } from "@expo/vector-icons";
-// import { BoldText } from "../components/styled-text";
-// import AddUnsplashImage from "../screens/home/unsplash";
-// import Settings from "../screens/home/settings";
+import * as React from 'react';
+import { BottomNavigation } from 'react-native-paper';
+import type { ReactNode } from 'react';
 
-const Stack = createStackNavigator();
+const HomeRoute = () => <HomeScreen />;
+const NotificationRoute = () => <NotificationScreen />;
+const ProfileRoute = () => <ProfileScreen />;
+
+type RenderIconProps = {
+  route: {
+    key: string;
+  };
+  focused: boolean;
+  color: string;
+};
 
 const HomeNavigation = () => {
+  const [index, setIndex] = React.useState(0);
+  const [routes] = React.useState([
+    { key: 'home', title: 'Home', icon: 'home-outline' },
+    { key: 'notification', title: 'notification', icon: 'file-tray-outline' },
+    { key: 'profile', title: 'Profile', icon: 'person-outline' },
+  ]);
+
+  const renderScene = BottomNavigation.SceneMap({
+    home: HomeRoute,
+    notification: NotificationRoute,
+    profile: ProfileRoute,
+  });
+
+  const renderIcon = ({ route, focused, color }: RenderIconProps): ReactNode => {
+    let iconName: keyof typeof Ionicons.glyphMap;
+    switch (route.key) {
+      case 'home':
+        iconName = focused ? 'home' : 'home-outline';
+        break;
+      case 'notification':
+        iconName = focused ? 'notifications' : 'notifications-outline'; // Adjust based on actual icon names
+        break;
+      case 'profile':
+        iconName = focused ? 'person' : 'person-outline';
+        break;
+      default:
+        iconName = 'alert-circle-outline'; // A valid fallback icon
+    }
+
+    // Ensure Ionicons has a matching glyphMap for the iconName
+    return <Ionicons name={iconName} size={24} color={color} />;
+  };
 
   return (
-    <Stack.Navigator
-      screenOptions={{
-        headerShown: true,
-        headerLeft: () => null,
-        headerStyle: {
-          borderBottomColor: "#eee",
-          borderBottomWidth: 1,
-        },
-        headerTitleStyle: {
-          fontFamily: "InterSoftBold",
-          fontSize: 24,
-          color: "#000",
-        },
-        ...TransitionPresets.SlideFromRightIOS,
-        animationEnabled: true,
-        gestureEnabled: true,
-        gestureDirection: "horizontal",
-      }}
-    >
-      <Stack.Screen
-        name="Home"
-        component={HomeScreen}
-      />
+    <BottomNavigation
+      navigationState={{ index, routes }}
+      onIndexChange={setIndex}
+      renderScene={renderScene}
+      renderIcon={renderIcon}
+      labeled={false}
+
+    />
+  );
+};
+
+export default HomeNavigation;
+
+// const HomeNavigation = () => {
+//   return (
+//     <Stack.Navigator
+//       screenOptions={{
+//         headerShown: true,
+//         headerLeft: () => null,
+//         headerStyle: {
+//           borderBottomColor: "#eee",
+//           borderBottomWidth: 1,
+//         },
+//         headerTitleStyle: {
+//           fontFamily: "InterSoftBold",
+//           fontSize: 24,
+//           color: "#000",
+//         },
+//         ...TransitionPresets.SlideFromRightIOS,
+//         animationEnabled: true,
+//         gestureEnabled: true,
+//         gestureDirection: "horizontal",
+//       }}
+//     >
+//       <Stack.Screen
+//         name="Home"
+//         component={HomeScreen}
+//       />
       {/* <Stack.Screen
         name="add-event"
         component={AddEventScreen}
@@ -133,8 +190,8 @@ const HomeNavigation = () => {
           ),
         })}
       /> */}
-    </Stack.Navigator>
-  );
-};
+//     </Stack.Navigator>
+//   );
+// };
 
-export default HomeNavigation;
+// export default HomeNavigation;

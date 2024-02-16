@@ -7,6 +7,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { CommonActions } from '@react-navigation/native';
 import StickyBottomTabs from '../../components/sticky-bottom-tabs';
 
+// TODO: index should consist of 3 main components: search bar, map, and class card
+// TODO: Plan for state control render state from index to components?
+
 export default function HomeScreen() {
   const navigation = useNavigation();
   const { setLogout } = useAuthStore();
