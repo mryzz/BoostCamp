@@ -1,9 +1,6 @@
 import React, { useLayoutEffect } from 'react';
 import { View, Text, StyleSheet, Button, Alert, TouchableOpacity } from 'react-native';
 // Assuming useDimensions is a custom hook you've create
-import { useNavigation } from '@react-navigation/native';
-import { useAuthStore } from '../../store/useAuthStore';
-import { Ionicons } from '@expo/vector-icons';
 import { CommonActions } from '@react-navigation/native';
 import StickyBottomTabs from '../../components/sticky-bottom-tabs';
 
@@ -11,42 +8,6 @@ import StickyBottomTabs from '../../components/sticky-bottom-tabs';
 // TODO: Plan for state control render state from index to components?
 
 export default function HomeScreen() {
-  const navigation = useNavigation();
-  const { setLogout } = useAuthStore();
-
-  const confirmLogOut = () => {
-    Alert.alert(
-      "Log Out",
-      "Are you sure you want to log out?",
-      [
-        {
-          text: "Cancel",
-          style: "cancel"
-        },
-        { text: "Yes", onPress: () => {
-            setLogout();  
-            navigation.dispatch(
-            CommonActions.reset({
-              index: 0,
-              routes: [{ name: 'Login' }],
-            })
-          );
-          }
-        }
-      ]
-    );
-  };
-
-  useLayoutEffect(() => {
-    navigation.setOptions({
-      headerLeft: () => (
-        <TouchableOpacity onPress={confirmLogOut} style={{ marginLeft: 15 }}>
-          <Ionicons name="log-out-outline" size={26} color="black" />
-        </TouchableOpacity>
-      ),
-    });
-  }, [navigation]);
-
   return (
     <View style={styles.container}>
       <Text style={styles.headerText}>

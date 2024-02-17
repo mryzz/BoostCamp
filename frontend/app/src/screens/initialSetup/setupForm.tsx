@@ -1,8 +1,10 @@
 import { useState, useEffect, SetStateAction } from 'react';
 import useDimensions from '../../hooks/useDimensions';
-import { View, Text, TouchableOpacity, TextInput, Button, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Button, ScrollView } from 'react-native';
 import { useAuthStore } from '../../store/useAuthStore';
-import DocumentPicker, { DocumentPickerResponse } from 'react-native-document-picker';
+import { Switch } from 'react-native-paper';
+import CustomTextInput from '../../components/text-input';
+// import DocumentPicker, { DocumentPickerResponse } from 'react-native-document-picker';
 
 interface FormData {
   firstName: string;
@@ -38,6 +40,7 @@ export default function CoachForm() {
   const [loading, setLoading] = useState(false);
   const [isCoachMode, setIsCoachMode] = useState(false);
   const { setIsInitialSetupComplete } = useAuthStore();
+  const [formErrors, setFormErrors] = useState<FormErrors>({});
 
   // Student specific fields
   const [firstName, setFirstName] = useState('');
@@ -72,27 +75,27 @@ export default function CoachForm() {
   };
 
 
-  const pickFile = async (setter: { (value: SetStateAction<null>): void; (value: SetStateAction<null>): void; (file: any): void; (arg0: any): void; }) => {
-    try {
-      const res = await DocumentPicker.pick({
-        type: [DocumentPicker.types.allFiles],
-        // Ensures only one file can be selected
-      });
-      const pickedFile = res[0];
-      if (pickedFile && pickedFile.uri) {
-        setter(pickedFile.uri); // Set the state with the file's URI
-      }
-    } catch (err) {
-      if (DocumentPicker.isCancel(err)) {
-        console.log('User cancelled the picker');
-        // Optionally reset the file selection state to null if needed
-        // setter(null);
-      } else {
-        console.error('DocumentPicker Error: ', err);
-        throw err;
-      }
-    }
-  };
+  // const pickFile = async (setter: { (value: SetStateAction<null>): void; (value: SetStateAction<null>): void; (file: any): void; (arg0: any): void; }) => {
+  //   try {
+  //     const res = await DocumentPicker.pick({
+  //       type: [DocumentPicker.types.allFiles],
+  //       // Ensures only one file can be selected
+  //     });
+  //     const pickedFile = res[0];
+  //     if (pickedFile && pickedFile.uri) {
+  //       setter(pickedFile.uri); // Set the state with the file's URI
+  //     }
+  //   } catch (err) {
+  //     if (DocumentPicker.isCancel(err)) {
+  //       console.log('User cancelled the picker');
+  //       // Optionally reset the file selection state to null if needed
+  //       // setter(null);
+  //     } else {
+  //       console.error('DocumentPicker Error: ', err);
+  //       throw err;
+  //     }
+  //   }
+  // };
 
   function validateInputs(formData: FormData): FormErrors {
     let errors: FormErrors = {};
@@ -156,6 +159,7 @@ export default function CoachForm() {
     } else {
       // Handle errors, e.g., by showing them to the user
       console.error('Validation errors:', errors);
+      setFormErrors(errors);
       // TODO: Display errors in the UI
     }
   }
@@ -168,136 +172,171 @@ export default function CoachForm() {
       backgroundColor: "#fff",
       paddingHorizontal: 16,
       paddingVertical: 32,
+      flex: 1,
     }}
-    contentContainerStyle={{ flex: 1, justifyContent: "space-between" }}
+    contentContainerStyle={{ justifyContent: "space-between", flexGrow: 1, }}
   >
-    <Text>SStudent Form</Text>
 
-    <TouchableOpacity onPress={() => setIsCoachMode(!isCoachMode)}>
-      <Text>{isCoachMode ? "Switch to Student Mode" : "Switch to Coach Mode"}</Text>
-    </TouchableOpacity>
-
-    <TextInput
-      value={firstName}
-      onChangeText={setFirstName}
-      placeholder="First Name"
-      // Add styling as needed
-    />
-    <TextInput
-      value={lastName}
-      onChangeText={setLastName}
-      placeholder="Last Name"
-      // Add styling as needed
-    />
-    <TextInput
+    <View style={{ justifyContent: 'center', alignItems: 'center' }}>
+      <Text>{isCoachMode ? 'Switch to Student Mode' : 'Switch to Coach Mode'}</Text>
+      <Switch
+        value={isCoachMode}
+        onValueChange={() => setIsCoachMode(!isCoachMode)}
+        color="tomato" // Optional: customize the switch color
+      />
+    </View>
+    <View style={styles.row}>
+      <CustomTextInput
+        label="First Name"
+        value={firstName}
+        onChangeText={setFirstName}
+        required={true}
+        placeholder="First Name"
+        containerStyle={styles.halfWidth}
+      />
+      <CustomTextInput
+        label="Last Name"
+        value={lastName}
+        onChangeText={setLastName}
+        required={true}
+        placeholder="Last Name"
+        containerStyle={styles.halfWidth}
+      />
+    </View>
+    <CustomTextInput
+      label="Phone Number"
       value={phoneNumber}
       onChangeText={setPhoneNumber}
+      required={true}
       placeholder="Phone Number"
-      // Add styling as needed
     />
-    <TextInput
+    <CustomTextInput
+      label="Gender"
       value={gender}
       onChangeText={setGender}
+      required={true} // Set as needed
       placeholder="Gender"
-      // Add styling as needed
     />
-    <TextInput
+    <CustomTextInput
+      label="Location"
       value={location}
       onChangeText={setLocation}
+      required={true}
       placeholder="Location"
-      // Add styling as needed
     />
     <Button
       title="Pick Profile Picture"
-      onPress={() => pickFile(setProfilePicture)}
+      // onPress={() => pickFile(setProfilePicture)}
     />
-    <TextInput
+    <CustomTextInput
+      label="introduction"
       value={introduction}
       onChangeText={setIntroduction}
+      required={false} // Set as needed
       placeholder="Write your introduction here..."
-      // Add styling as needed
     />
 
   {/* Conditional Rendering for Coach-specific Fields */}   
-  {isCoachMode && (
-    <>
-      <TextInput
+    {isCoachMode && (
+    <View>
+      <Text style={styles.sectionTitle}>Coach-Specific Information</Text>
+      <CustomTextInput
+        label="Title"
         value={title}
         onChangeText={setTitle}
-        placeholder="Title (e.g., History Tutor)"
-        // Add additional styling as needed
+        required={true}
+        placeholder="e.g., History Tutor"
       />
-      <TextInput
+      <CustomTextInput
+        label="Specialties"
         value={specialties}
         onChangeText={setSpecialties}
-        placeholder="Specialties (e.g., European History)"
-        // Add additional styling as needed
+        required={true}
+        placeholder="e.g., European History"
       />
-      <TextInput
+      <CustomTextInput
+        label="Experience"
         value={experience}
         onChangeText={setExperience}
-        placeholder="Experience"
+        required={true}
+        placeholder="Your experience"
         multiline
-        // Add additional styling as needed
       />
-      <TextInput
+      <CustomTextInput
+        label="Achievements"
         value={achievements}
         onChangeText={setAchievements}
-        placeholder="Achievements"
+        required={false}
+        placeholder="Your achievements"
         multiline
-        // Add additional styling as needed
       />
-      <TextInput
+      <CustomTextInput
+        label="Certification Name"
         value={certificationName}
         onChangeText={setCertificationName}
-        placeholder="Certification Name"
-        // Add additional styling as needed
+        required={true}
+        placeholder="Certification name"
       />
-      <Button
-        title="Pick Certification Document"
-        onPress={() => pickFile(setCertification)}
-      />
-      <TextInput
+      <CustomTextInput
+        label="Years of Experience"
         value={yearsOfExperience}
         onChangeText={setYearsOfExperience}
-        placeholder="Years of Experience"
+        required={true}
+        placeholder="Years of experience"
         keyboardType="numeric"
-        // Add additional styling as needed
       />
-      <TextInput
+      <CustomTextInput
+        label="Testimonials"
         value={testimonials}
         onChangeText={setTestimonials}
+        required={false}
         placeholder="Testimonials"
         multiline
-        // Add additional styling as needed
       />
-      {/* Education Fields */}
-      <TextInput
+      <CustomTextInput
+        label="Institution"
         value={education.institution}
-        onChangeText={(text) => setEducation({ ...education, institution: text })}
-        placeholder="Institution (e.g., Nanyang JC)"
-        // Add additional styling as needed
+        onChangeText={(text: any) => setEducation({ ...education, institution: text })}
+        required={true}
+        placeholder="e.g., Nanyang JC"
       />
-      <TextInput
+      <CustomTextInput
+        label="Field of Study"
         value={education.fieldOfStudy}
-        onChangeText={(text) => setEducation({ ...education, fieldOfStudy: text })}
-        placeholder="Field of Study (e.g., A Level)"
-        // Add additional styling as needed
+        onChangeText={(text: any) => setEducation({ ...education, fieldOfStudy: text })}
+        required={true}
+        placeholder="e.g., A Level"
       />
-      <Button
-        title="Pick Education Certification"
-        onPress={() => pickFile((file) => setEducation({ ...education, certification: file }))}
-      />
-      <TextInput
+      <CustomTextInput
+        label="LinkedIn Link"
         value={linkedinLink}
         onChangeText={setLinkedinLink}
-        placeholder="LinkedIn Link"
-        // Add additional styling as needed
+        required={false}
+        placeholder="Your LinkedIn profile link"
       />
-    </>
+    </View>
   )}
 
     <Button title="Submit" onPress={() => handleForm() } />
   </ScrollView>
   )
   }
+
+  const styles = StyleSheet.create({
+  container: {
+    padding: 10,
+  },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  halfWidth: {
+    width: '48%', // Adjusts for spacing, you can tweak this as needed
+  },
+  sectionTitle: {
+    fontSize: 24, // Adjust fontSize to match <h1> styling as needed
+    fontWeight: 'bold',
+    textAlign: 'center', // Center the text horizontally
+    marginTop: 20, // Add some top margin
+  }
+});
