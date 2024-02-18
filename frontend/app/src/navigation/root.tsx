@@ -28,9 +28,9 @@ const RootNavigation = () => {
           gestureDirection: "horizontal",
         }}
       >
-        {!isLoggedIn ? (
+        {!isLoggedIn && hasJustSignedUp ? (
           <Stack.Screen name="auth-stack" component={AuthNavigation} />
-        ) : hasJustSignedUp && !isInitialSetupComplete ? (
+        ) : !isInitialSetupComplete ? (
           <Stack.Screen name="initial-setup-stack" component={InitialSetupNavigation} />
         ) : (
           <Stack.Screen name="home-stack" component={HomeNavigation} />

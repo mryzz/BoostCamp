@@ -4,9 +4,14 @@ import { View, Text, StyleSheet, Button, ScrollView } from 'react-native';
 import { useAuthStore } from '../../store/useAuthStore';
 import { Switch } from 'react-native-paper';
 import CustomTextInput from '../../components/text-input';
+import axios, { AxiosError, AxiosResponse } from 'axios';
+import { showMessage } from 'react-native-flash-message';
 // import DocumentPicker, { DocumentPickerResponse } from 'react-native-document-picker';
 
-interface FormData {
+// API URL for login requests
+const URL = 'http://192.168.1.160:8000/accounts/profiles/basic/';
+
+interface StructuredFormData {
   firstName: string;
   lastName: string;
   phoneNumber: string;
@@ -14,7 +19,6 @@ interface FormData {
   location: string;
   profilePicture: File | null;
   introduction: string;
-  // Coach-specific fields
   title: string;
   specialties: string;
   experience: string;
@@ -33,6 +37,14 @@ interface FormData {
 
 interface FormErrors {
   [key: string]: string;
+}
+
+interface FormSubmissionSuccessResponse {
+  message: string; // Adjust based on your API's response structure
+}
+
+interface ApiErrorResponse {
+  error: string;
 }
 
 export default function CoachForm() {
@@ -97,30 +109,28 @@ export default function CoachForm() {
   //   }
   // };
 
-  function validateInputs(formData: FormData): FormErrors {
+  function validateInputs(data: StructuredFormData, isCoachMode: boolean): FormErrors {
     let errors: FormErrors = {};
 
     // Validate student-specific fields
-    if (!formData.firstName.trim()) errors.firstName = 'First name is required';
-    if (!formData.lastName.trim()) errors.lastName = 'Last name is required';
-    if (!formData.phoneNumber.trim()) errors.phoneNumber = 'Phone number is required';
-    else if (!/^\d{10}$/.test(formData.phoneNumber)) errors.phoneNumber = 'Invalid phone number, must be 10 digits';
-    if (!formData.gender.trim()) errors.gender = 'Gender is required';
-    if (!formData.location.trim()) errors.location = 'Location is required';
+    if (!data.firstName.trim()) errors.firstName = 'First name is required';
+    if (!data.lastName.trim()) errors.lastName = 'Last name is required';
+    if (!data.phoneNumber.trim()) errors.phoneNumber = 'Phone number is required';
+    // else if (!/^\d{11}$/.test(data.phoneNumber)) errors.phoneNumber = 'Invalid phone number, must be 11 digits';
+    if (!data.gender.trim()) errors.gender = 'Gender is required';
+    if (!data.location.trim()) errors.location = 'Location is required';
 
     // Validate coach-specific fields if in coach mode
-    if (isCoachMode) { // Assume isCoachMode is a boolean indicating if the user is a coach
-      if (!formData.title.trim()) errors.title = 'Title is required for coaches';
-      if (!formData.specialties.trim()) errors.specialties = 'Specialties are required for coaches';
-      if (!formData.experience.trim()) errors.experience = 'Experience is required for coaches';
-      // Additional validations for coach fields...
-      if (!formData.yearsOfExperience.trim()) errors.yearsOfExperience = 'Years of experience is required for coaches';
-      else if (isNaN(Number(formData.yearsOfExperience)) || Number(formData.yearsOfExperience) <= 0) errors.yearsOfExperience = 'Invalid years of experience, must be a positive number';
+    if (isCoachMode) {
+      if (!data.title.trim()) errors.title = 'Title is required for coaches';
+      if (!data.specialties.trim()) errors.specialties = 'Specialties are required for coaches';
+      if (!data.experience.trim()) errors.experience = 'Experience is required for coaches';
+      if (!data.yearsOfExperience.trim()) errors.yearsOfExperience = 'Years of experience is required for coaches';
+      else if (isNaN(Number(data.yearsOfExperience)) || Number(data.yearsOfExperience) <= 0) errors.yearsOfExperience = 'Invalid years of experience, must be a positive number';
 
-      if (!formData.education.institution.trim()) errors['education.institution'] = 'Institution is required for coaches';
-      if (!formData.education.fieldOfStudy.trim()) errors['education.fieldOfStudy'] = 'Field of study is required for coaches';
-      // LinkedIn link validation
-      if (formData.linkedinLink.trim() && !/^(http:\/\/www\.|https:\/\/www\.|http:\/\/|https:\/\/)?[a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,5}(:[0-9]{1,5})?(\/.*)?$/.test(formData.linkedinLink))
+      if (!data.education.institution.trim()) errors['education.institution'] = 'Institution is required for coaches';
+      if (!data.education.fieldOfStudy.trim()) errors['education.fieldOfStudy'] = 'Field of study is required for coaches';
+      if (data.linkedinLink.trim() && !/^(http:\/\/www\.|https:\/\/www\.|http:\/\/|https:\/\/)?[a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,5}(:[0-9]{1,5})?(\/.*)?$/.test(data.linkedinLink))
         errors.linkedinLink = 'Invalid LinkedIn link';
     }
 
@@ -128,7 +138,7 @@ export default function CoachForm() {
   }
 
   async function handleForm() {
-    const formData: FormData = {
+    const structuredFormData = {
       firstName,
       lastName,
       phoneNumber,
@@ -148,23 +158,112 @@ export default function CoachForm() {
       linkedinLink,
     };
 
-    const errors = validateInputs(formData);
+const errors = validateInputs(structuredFormData, isCoachMode);
+if (Object.keys(errors).length > 0) {
+  // Handle validation errors
+  console.error('Validation errors:', errors);
+  setFormErrors(errors);
+  setLoading(false);
+  return; // Stop execution if there are errors
+}
 
-    // Check if there are any errors
-    if (Object.keys(errors).length === 0) {
-      // No errors, proceed with form submission
-      console.log(formData);
-      handleSetupSuccess()
-      // TODO: Post data to backend
-    } else {
-      // Handle errors, e.g., by showing them to the user
-      console.error('Validation errors:', errors);
-      setFormErrors(errors);
-      // TODO: Display errors in the UI
-    }
+setLoading(true);
+
+// Create a promise that rejects after 7 seconds
+const timeoutPromise = new Promise((resolve, reject) => {
+  setTimeout(() => reject(new Error('Request timed out')), 15000);
+});
+
+//TODO: Debug the sending of request to server, keep getting 400
+//TODO: Createif logic to ssend coach or student data depending on user's choice
+try {
+  const formData = new FormData();
+  formData.append('first_name', firstName);
+  formData.append('last_name', lastName);
+  formData.append('phone_number', phoneNumber);
+  formData.append('gender', gender.toLowerCase());
+  formData.append('location', location);
+  // formData.append('introduction', introduction);
+  // formData.append('title', title);
+  // formData.append('specialties', specialties);
+  // formData.append('experience', experience);
+  // formData.append('achievements', achievements);
+  // formData.append('certificationName', certificationName);
+  // formData.append('yearsOfExperience', yearsOfExperience);
+  // formData.append('testimonials', testimonials);
+  // formData.append('linkedinLink', linkedinLink);
+
+  // // Handle complex object (convert to JSON string)
+  // formData.append('education', JSON.stringify(education));
+
+  // // Handle file fields conditionally
+  // if (profilePicture) {
+  //   // Assuming profilePicture is a File object; adjust as necessary
+  //   formData.append('profilePicture', profilePicture);
+  // }
+  // if (certification) {
+  //   // Assuming certification is a File object; adjust as necessary
+  //   formData.append('certification', certification);
+  // }
+
+  console.log(formData);
+  // Race the axios request against the timeout
+  const result = await Promise.race([
+    axios.post(URL, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        // TODO: Get the token from login and insert here at the authorization
+        'Authorization': 'Token af3eb88c5d3f470c74de2a9ee0b5bcfcc4e6894f'
+      },
+    }),
+    timeoutPromise
+  ]);
+
+  const response = result as AxiosResponse<FormSubmissionSuccessResponse>;
+
+  if (response.status === 200 || response.status === 201) {
+    showMessage({
+      message: "Account created successfully!",
+      type: "success",
+    });
+    handleSetupSuccess();
+    setLoading(false);
   }
+} catch (error) {
+  console.log(error)
+  setLoading(false); // Ensure loading state is reset
 
-  return (
+  // Asserting error type as AxiosError
+  if (axios.isAxiosError(error)) {
+    let errorMessage = "Failed to sign up!";
+    if (error.response) {
+      const errorData = error.response.data as ApiErrorResponse;
+      errorMessage = errorData.error ? errorData.error : errorMessage;
+    } else if (error.request) {
+      errorMessage = "Network error or server did not respond.";
+    }
+    showMessage({
+      message: errorMessage,
+      type: "danger",
+      icon: "danger",
+    });
+  } else if (error instanceof Error && error.message === 'Request timed out') {
+    // Handle timeout specific error
+    showMessage({
+      message: "Signup request timed out, please try again.",
+      type: "danger",
+    });
+  } else {
+    // Handle other errors that might not be Axios errors
+    showMessage({
+      message: "An unexpected error occurred.",
+      type: "danger",
+    });
+  }
+}
+  }
+    
+    return (
   <ScrollView
     style={{
       width: screenWidth,

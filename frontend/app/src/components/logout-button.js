@@ -5,8 +5,17 @@ import { useNavigation } from '@react-navigation/native';
 import { CommonActions } from '@react-navigation/native';
 
 export default function LogoutButton() {
-  const { setLogout } = useAuthStore();
+  const { setLogout, setIsLoggedIn, setToken} = useAuthStore();
   const navigation = useNavigation();
+
+  function resetStack() {
+    navigation.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [{ name: 'auth-stack' }], // Name of the route defined in RootStackParamList
+      })
+    );
+  }
 
   const confirmLogOut = () => {
     Alert.alert(
@@ -19,13 +28,10 @@ export default function LogoutButton() {
         },
         { 
           text: "Yes", onPress: () => {
-              setLogout();  
-              navigation.dispatch(
-                CommonActions.reset({
-                  index: 0,
-                  routes: [{ name: 'Login' }],
-                })
-              );
+              setLogout(); 
+              setIsLoggedIn(false); 
+              setToken("");
+              resetStack();
             }
         }
       ]

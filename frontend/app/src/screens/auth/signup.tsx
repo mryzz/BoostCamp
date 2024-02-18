@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, ActivityIndicator, TouchableOpacity, Image, ScrollView } from 'react-native';
 import axios, { AxiosError, AxiosResponse } from 'axios';
-import { useNavigation, NavigationProp } from '@react-navigation/native';
+import { useNavigation, CommonActions, NavigationProp } from '@react-navigation/native';
 import { showMessage } from 'react-native-flash-message';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
@@ -31,12 +31,22 @@ export default function SignupScreen() {
   }
 
   interface SignupSuccessResponse {
+    token: any;
     message: string; // Adjust based on your API's response structure
+  }
+
+  function resetStack() {
+    navigation.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [{ name: 'auth-stack' }], // Name of the route defined in RootStackParamList
+      })
+    );
   }
 
   const handleSignUpSuccess = () => {
     setHasJustSignedUp(true);
-    setIsLoggedIn(true);
+    resetStack(); 
   };
 
   async function selectImageFromGallery() {
@@ -64,6 +74,7 @@ async function handleSignup() {
     formData.append('email', email);
     formData.append('password', password);
 
+    console.log(formData);
     // Race the axios request against the timeout
     const result = await Promise.race([
       axios.post(URL, formData, {
@@ -83,6 +94,7 @@ async function handleSignup() {
         message: "Account created successfully!",
         type: "success",
       });
+
       handleSignUpSuccess();
     }
   } catch (error) {
@@ -117,26 +129,6 @@ async function handleSignup() {
     }
   }
 }
-
-    function handleSignupError(error: unknown) {
-    const err = error as AxiosError;
-    let errorMessage = "Failed to sign up!";
-
-    // Determine the type of error and set an appropriate message
-    if (err.response) {
-      const errorData = err.response.data as ApiErrorResponse;
-      errorMessage = errorData.error ? errorData.error : errorMessage;
-    } else if (err.request) {
-      errorMessage = "Network error or server did not respond.";
-    }
-
-    // Display the error message to the user
-    showMessage({
-      message: errorMessage,
-      type: "danger",
-      icon: "danger",
-    });
-  }
 
   return (
     <ScrollView
