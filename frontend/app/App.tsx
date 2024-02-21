@@ -6,6 +6,8 @@ import RootNavigation from "./src/navigation/root";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import FlashMessage from "react-native-flash-message";
 import useCachedResources from './src/hooks/useCachedResources'
+import { PaperProvider } from 'react-native-paper';
+import { CustomTheme } from './src/styles/theme';
 
 export default function App() {
   const { isLoadingComplete, loadingError } = useCachedResources()
@@ -22,16 +24,18 @@ export default function App() {
   }
 
   return (
-    <SafeAreaProvider style={{ flex: 1 }}>
-      <StatusBar style="auto" />
-      <RootNavigation />
-      <FlashMessage
-        position="top"
-        animated
-        statusBarHeight={40}
-        titleStyle={{ fontFamily: "InterSoftMedium", fontSize: 16 }}
-        duration={3000}
-      />
-    </SafeAreaProvider>
+    <PaperProvider theme={CustomTheme}>
+      <SafeAreaProvider style={{ flex: 1 }}>
+        <StatusBar style="auto" />
+        <RootNavigation />
+        <FlashMessage
+          position="top"
+          animated
+          statusBarHeight={40}
+          titleStyle={{ fontFamily: "InterSoftMedium", fontSize: 16 }}
+          duration={3000}
+        />
+      </SafeAreaProvider>
+    </PaperProvider>
   );
 }
